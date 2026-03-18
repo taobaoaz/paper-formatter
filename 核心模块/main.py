@@ -1741,6 +1741,14 @@ class MainWindow(QMainWindow):
         # 工具菜单
         tools_menu = menubar.addMenu('工具 (&T)')
         
+        # 格式化配置
+        format_config_action = QAction('⚙️ 格式化配置', self)
+        format_config_action.setShortcut('Ctrl+Alt+F')
+        format_config_action.triggered.connect(self.open_format_config)
+        tools_menu.addAction(format_config_action)
+        
+        tools_menu.addSeparator()
+        
         cover_config_action = QAction('📘 封面和声明页配置', self)
         cover_config_action.setShortcut('Ctrl+Shift+C')
         cover_config_action.triggered.connect(self.open_cover_declaration_config)
@@ -1751,6 +1759,8 @@ class MainWindow(QMainWindow):
         batch_action.setShortcut('Ctrl+B')
         batch_action.triggered.connect(self.open_batch_processor)
         tools_menu.addAction(batch_action)
+        
+        tools_menu.addSeparator()
         
         # 检查更新
         update_action = QAction('🔄 检查更新', self)
@@ -1803,6 +1813,19 @@ class MainWindow(QMainWindow):
         )
     
 
+    
+    def open_format_config(self):
+        """打开格式化配置对话框"""
+        try:
+            from format_config import FormatConfig
+            from format_config_dialog import FormatConfigDialog
+            
+            config = FormatConfig()
+            dialog = FormatConfigDialog(config, self)
+            if dialog.exec_() == QDialog.Accepted:
+                self.statusBar().showMessage('格式化配置已保存', 3000)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开配置失败：{e}')
     
     def check_update(self):
         """检查更新"""
