@@ -1294,6 +1294,29 @@ class MainWindow(QMainWindow):
         self.selected_template = None
         
         self.init_ui()
+        
+        # 延迟检查更新（5 秒后）
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(5000, self.auto_check_update)
+    
+    def auto_check_update(self):
+        """自动检查更新（不显示对话框，只在后台检查）"""
+        try:
+            from auto_updater import AutoUpdater
+            updater = AutoUpdater()
+            update_info = updater.check_update()
+            
+            if update_info.get('has_update'):
+                # 显示托盘通知（如果有）
+                if hasattr(self, 'tray_icon') and self.tray_icon:
+                    self.tray_icon.showMessage(
+                        '发现新版本',
+                        f'发现新版本 {update_info["latest_version"]}，点击"工具"菜单检查更新',
+                        QSystemTrayIcon.Information,
+                        3000
+                    )
+        except:
+            pass  # 静默失败，不影响主程序
     
     def init_ui(self):
         self.setWindowTitle('论文排版优化工具')
@@ -1723,6 +1746,12 @@ class MainWindow(QMainWindow):
         cover_config_action.triggered.connect(self.open_cover_declaration_config)
         tools_menu.addAction(cover_config_action)
         
+        # 检查更新
+        update_action = QAction('🔄 检查更新', self)
+        update_action.setShortcut('Ctrl+U')
+        update_action.triggered.connect(self.check_update)
+        tools_menu.addAction(update_action)
+        
         system_check_action = QAction('🔧 系统诊断', self)
         system_check_action.triggered.connect(self.show_system_check)
         help_menu.addAction(system_check_action)
@@ -1768,6 +1797,14 @@ class MainWindow(QMainWindow):
         )
     
 
+    
+    def check_update(self):
+        """检查更新"""
+        try:
+            from auto_updater import check_for_updates
+            check_for_updates(self)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'检查更新失败：{e}')
     
     def open_cover_declaration_config(self):
         """打开封面和声明页配置对话框"""
