@@ -2,11 +2,11 @@
 
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    ['核心模块/main.py'],
+    pathex=['功能模块', '核心模块'],
     binaries=[],
-    datas=[('docs', 'docs')],
-    hiddenimports=['PyQt5', 'python-docx'],
+    datas=[('功能模块/parsers', 'parsers'), ('功能模块/rules', 'rules')],
+    hiddenimports=['parsers', 'rules'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
