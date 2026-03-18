@@ -1741,6 +1741,14 @@ class MainWindow(QMainWindow):
         # 工具菜单
         tools_menu = menubar.addMenu('工具 (&T)')
         
+        # 模板管理
+        template_action = QAction('📋 模板管理', self)
+        template_action.setShortcut('Ctrl+Alt+T')
+        template_action.triggered.connect(self.open_template_manager)
+        tools_menu.addAction(template_action)
+        
+        tools_menu.addSeparator()
+        
         # 格式化配置
         format_config_action = QAction('⚙️ 格式化配置', self)
         format_config_action.setShortcut('Ctrl+Alt+F')
@@ -1813,6 +1821,16 @@ class MainWindow(QMainWindow):
         )
     
 
+    
+    def open_template_manager(self):
+        """打开模板管理器"""
+        try:
+            from template_editor_dialog import TemplateEditorDialog
+            
+            dialog = TemplateEditorDialog(self)
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开模板管理器失败：{e}')
     
     def open_format_config(self):
         """打开格式化配置对话框"""

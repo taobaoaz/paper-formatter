@@ -251,7 +251,7 @@ class FormatConfig:
         if not font.get('chinese_font'):
             errors.append('中文字体不能为空')
         if not font.get('english_font'):
-            errors.append'英文字体不能为空')
+            errors.append('英文字体不能为空')
         
         # 验证页面配置
         page = self.config.get('page', {})
