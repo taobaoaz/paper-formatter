@@ -1715,6 +1715,13 @@ class MainWindow(QMainWindow):
         settings_menu.addAction(settings_action)
         
         help_menu = menubar.addMenu('帮助(&H)')
+        # 工具菜单
+        tools_menu = menubar.addMenu('工具 (&T)')
+        
+        cover_config_action = QAction('📘 封面和声明页配置', self)
+        cover_config_action.setShortcut('Ctrl+Shift+C')
+        cover_config_action.triggered.connect(self.open_cover_declaration_config)
+        tools_menu.addAction(cover_config_action)
         
         system_check_action = QAction('🔧 系统诊断', self)
         system_check_action.triggered.connect(self.show_system_check)
@@ -1762,6 +1769,21 @@ class MainWindow(QMainWindow):
     
 
     
+    def open_cover_declaration_config(self):
+        """打开封面和声明页配置对话框"""
+        try:
+            from cover_declaration_config import CoverDeclarationConfigDialog
+            dialog = CoverDeclarationConfigDialog(parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                config = dialog.get_config()
+                school = config.get('cover', {}).get('school_name', '未设置')
+                self.statusBar().showMessage(f'封面配置已更新：{school}')
+                QMessageBox.information(self, '成功', '封面配置已保存！\n\n可以在格式化时自动应用。')
+        except ImportError as e:
+            QMessageBox.critical(self, '错误', f'无法加载封面配置模块：{str(e)}\n\n请确保 cover_declaration_config.py 文件存在。')
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开封面配置失败：{str(e)}')
+
     def open_quick_generate(self):
         if not hasattr(self, 'quick_gen_page'):
             self.quick_gen_page = QuickGeneratePage(self)
