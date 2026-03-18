@@ -1746,6 +1746,12 @@ class MainWindow(QMainWindow):
         cover_config_action.triggered.connect(self.open_cover_declaration_config)
         tools_menu.addAction(cover_config_action)
         
+        # 批量处理
+        batch_action = QAction('📦 批量处理', self)
+        batch_action.setShortcut('Ctrl+B')
+        batch_action.triggered.connect(self.open_batch_processor)
+        tools_menu.addAction(batch_action)
+        
         # 检查更新
         update_action = QAction('🔄 检查更新', self)
         update_action.setShortcut('Ctrl+U')
@@ -1805,6 +1811,20 @@ class MainWindow(QMainWindow):
             check_for_updates(self)
         except Exception as e:
             QMessageBox.critical(self, '错误', f'检查更新失败：{e}')
+    
+    def open_batch_processor(self):
+        """打开批量处理对话框"""
+        try:
+            from batch_processor import BatchProcessor, BatchReport
+            from file_backup import FileBackup
+            from PyQt5.QtWidgets import QFileDialog
+            
+            dialog = BatchProcessorDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                # 处理完成
+                self.statusBar().showMessage('批量处理完成', 5000)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'批量处理失败：{e}')
     
     def open_cover_declaration_config(self):
         """打开封面和声明页配置对话框"""
