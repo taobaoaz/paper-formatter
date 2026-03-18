@@ -15,7 +15,13 @@ from PyQt5.QtGui import QPixmap, QImage
 from docx import Document
 import os
 import tempfile
-import win32com.client
+
+# Windows 专用模块，仅在 Windows 上可用
+try:
+    import win32com.client
+    WIN32_AVAILABLE = True
+except ImportError:
+    WIN32_AVAILABLE = False
 
 
 class TemplatePageSelectorDialog(QDialog):
@@ -162,23 +168,25 @@ class TemplatePageSelectorDialog(QDialog):
     
     def get_word_page_count(self, file_path):
         """获取 Word 文档页数"""
-        try:
-            # 方法 1：使用 win32com（需要安装 pywin32）
-            word = win32com.client.Dispatch("Word.Application")
-            word.Visible = False
-            doc = word.Documents.Open(file_path)
-            page_count = doc.ComputeStatistics(2)  # wdStatisticPages = 2
-            doc.Close(False)
-            word.Quit()
-            return page_count
-            
-        except Exception:
-            # 方法 2：估算页数（不精确）
-            doc = Document(file_path)
-            para_count = len(doc.paragraphs)
-            # 粗略估算：每页约 30 段
-            estimated_pages = max(1, (para_count // 30) + 1)
-            return estimated_pages
+        if WIN32_AVAILABLE:
+            try:
+                # 方法 1：使用 win32com（需要安装 pywin32，仅 Windows）
+                word = win32com.client.Dispatch("Word.Application")
+                word.Visible = False
+                doc = word.Documents.Open(file_path)
+                page_count = doc.ComputeStatistics(2)  # wdStatisticPages = 2
+                doc.Close(False)
+                word.Quit()
+                return page_count
+            except Exception:
+                pass
+        
+        # 方法 2：估算页数（不精确，跨平台）
+        doc = Document(file_path)
+        para_count = len(doc.paragraphs)
+        # 粗略估算：每页约 30 段
+        estimated_pages = max(1, (para_count // 30) + 1)
+        return estimated_pages
     
     def on_cover_page_changed(self, index):
         """封面页改变时的处理"""
