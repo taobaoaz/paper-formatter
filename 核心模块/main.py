@@ -1741,6 +1741,14 @@ class MainWindow(QMainWindow):
         # 工具菜单
         tools_menu = menubar.addMenu('工具 (&T)')
         
+        # 文件预览
+        preview_action = QAction('👁️ 文件预览', self)
+        preview_action.setShortcut('Ctrl+Alt+P')
+        preview_action.triggered.connect(self.open_file_preview)
+        tools_menu.addAction(preview_action)
+        
+        tools_menu.addSeparator()
+        
         # 模板管理
         template_action = QAction('📋 模板管理', self)
         template_action.setShortcut('Ctrl+Alt+T')
@@ -1821,6 +1829,16 @@ class MainWindow(QMainWindow):
         )
     
 
+    
+    def open_file_preview(self):
+        """打开文件预览"""
+        try:
+            from file_preview_dialog import FilePreviewDialog
+            
+            dialog = FilePreviewDialog(self)
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开文件预览失败：{e}')
     
     def open_template_manager(self):
         """打开模板管理器"""
