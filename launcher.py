@@ -11,8 +11,8 @@ import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# 启动主程序（使用合并版 v2.0）
-from main_merged import main
+# 启动主程序（使用完全版 v2.0）
+from main import main
 
 if __name__ == '__main__':
     main()
