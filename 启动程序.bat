@@ -15,6 +15,72 @@ cd /d "%~dp0"
 echo  [检查] 正在检查系统环境...
 echo.
 
+:: 自动同步代码到GitHub
+echo  [同步] 正在自动同步代码到GitHub...
+echo.
+
+:: 检查Git是否安装
+git --version >nul 2>&1
+if %errorlevel% equ 0 (
+    :: 检查是否为Git仓库
+    if not exist ".git" (
+        echo  [操作] 初始化Git仓库...
+        git init >nul 2>&1
+        if %errorlevel% equ 0 (
+            echo  [成功] Git仓库初始化完成
+        ) else (
+            echo  [警告] Git仓库初始化失败
+        )
+    )
+    
+    :: 检查远程仓库配置
+    git remote -v >nul 2>&1
+    if %errorlevel% neq 0 (
+        echo  [操作] 配置远程仓库...
+        git remote add origin https://github.com/taobaoaz/-.git >nul 2>&1
+        if %errorlevel% equ 0 (
+            echo  [成功] 远程仓库配置完成
+            :: 设置主分支
+            git branch -M main >nul 2>&1
+        ) else (
+            echo  [警告] 远程仓库配置失败
+        )
+    )
+    
+    :: 检查是否配置了远程仓库
+    git remote -v >nul 2>&1
+    if %errorlevel% equ 0 (
+        :: 添加所有修改
+        git add . >nul 2>&1
+        
+        :: 检查是否有修改
+        git status --porcelain > git_status.txt
+        set /p changes=<git_status.txt
+        del git_status.txt
+        
+        if not "%changes%"=="" (
+            :: 提交修改
+            git commit -m "Auto sync: %date% %time%" >nul 2>&1
+            
+            :: 推送代码
+            git push -u origin main >nul 2>&1
+            if %errorlevel% equ 0 (
+                echo  [成功] 代码已自动同步到GitHub
+            ) else (
+                echo  [警告] 代码同步失败（可能需要GitHub认证）
+            )
+        ) else (
+            echo  [信息] 代码已是最新，无需同步
+        )
+    ) else (
+        echo  [信息] 未配置远程仓库，跳过同步
+    )
+) else (
+    echo  [信息] Git未安装，跳过同步
+)
+
+echo.
+
 :: 检查 Python 是否安装
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
