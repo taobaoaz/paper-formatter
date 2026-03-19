@@ -1293,11 +1293,40 @@ class MainWindow(QMainWindow):
         self.recognized_template = None
         self.selected_template = None
         
+        # 初始化撤销管理器 (v2.1.4 新增)
+        self.undo_manager = None
+        self._init_undo_manager()
+        
         self.init_ui()
         
         # 延迟检查更新（5 秒后）
         from PyQt5.QtCore import QTimer
         QTimer.singleShot(5000, self.auto_check_update)
+    
+    def _init_undo_manager(self):
+        """初始化撤销管理器 (v2.1.4 新增)"""
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '功能模块'))
+            from undo_manager import UndoManager
+            
+            # 使用配置目录保存撤销历史
+            config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.config')
+            self.undo_manager = UndoManager(config_dir)
+            
+            # 添加状态变化监听器，更新状态栏
+            self.undo_manager.add_listener(self._on_undo_state_changed)
+        except Exception as e:
+            print(f"初始化撤销管理器失败：{e}")
+            self.undo_manager = None
+    
+    def _on_undo_state_changed(self, undo_manager):
+        """撤销状态变化时的回调 (v2.1.4 新增)"""
+        if hasattr(self, 'status_bar') and self.status_bar:
+            undo_count = undo_manager.get_undo_count()
+            redo_count = undo_manager.get_redo_count()
+            if undo_count > 0 or redo_count > 0:
+                self.status_bar.showMessage(f'撤销：{undo_count} 步 | 重做：{redo_count} 步', 5000)
     
     def auto_check_update(self):
         """自动检查更新（不显示对话框，只在后台检查）"""
@@ -1738,6 +1767,39 @@ class MainWindow(QMainWindow):
         settings_menu.addAction(settings_action)
         
         help_menu = menubar.addMenu('帮助(&H)')
+        
+        # 编辑菜单 (v2.1.4 新增)
+        edit_menu = menubar.addMenu('编辑 (&E)')
+        
+        # 撤销
+        self.undo_action = QAction('↩️ 撤销', self)
+        self.undo_action.setShortcut('Ctrl+Z')
+        self.undo_action.triggered.connect(self.perform_undo)
+        self.undo_action.setEnabled(False)
+        edit_menu.addAction(self.undo_action)
+        
+        # 重做
+        self.redo_action = QAction('↪️ 重做', self)
+        self.redo_action.setShortcut('Ctrl+Y')
+        self.redo_action.triggered.connect(self.perform_redo)
+        self.redo_action.setEnabled(False)
+        edit_menu.addAction(self.redo_action)
+        
+        edit_menu.addSeparator()
+        
+        # 文档快照管理 (v2.1.6 新增)
+        snapshot_action = QAction('📸 文档快照管理', self)
+        snapshot_action.setShortcut('Ctrl+Alt+S')
+        snapshot_action.triggered.connect(self.open_document_snapshot)
+        edit_menu.addAction(snapshot_action)
+        
+        edit_menu.addSeparator()
+        
+        # 清空历史
+        clear_history_action = QAction('🗑️ 清空撤销历史', self)
+        clear_history_action.triggered.connect(self.clear_undo_history)
+        edit_menu.addAction(clear_history_action)
+        
         # 工具菜单
         tools_menu = menubar.addMenu('工具 (&T)')
         
@@ -1762,6 +1824,12 @@ class MainWindow(QMainWindow):
         format_config_action.setShortcut('Ctrl+Alt+F')
         format_config_action.triggered.connect(self.open_format_config)
         tools_menu.addAction(format_config_action)
+        
+        # 配置快照管理 (v2.1.6 新增)
+        config_snapshot_action = QAction('💾 配置快照管理', self)
+        config_snapshot_action.setShortcut('Ctrl+Alt+K')
+        config_snapshot_action.triggered.connect(self.open_config_snapshot)
+        tools_menu.addAction(config_snapshot_action)
         
         tools_menu.addSeparator()
         
@@ -1828,7 +1896,56 @@ class MainWindow(QMainWindow):
 '''
         )
     
-
+    # ==================== 撤销/重做功能 (v2.1.4 新增) ====================
+    
+    def perform_undo(self):
+        """执行撤销操作"""
+        if not self.undo_manager:
+            return
+        
+        action = self.undo_manager.undo()
+        if action:
+            self.statusBar().showMessage(f'已撤销：{action.description}', 3000)
+            # TODO: 根据 action.action_type 执行实际的撤销逻辑
+            # 目前先记录操作，实际撤销逻辑需要与 formatter 集成
+        else:
+            self.statusBar().showMessage('没有可撤销的操作', 2000)
+    
+    def perform_redo(self):
+        """执行重做操作"""
+        if not self.undo_manager:
+            return
+        
+        action = self.undo_manager.redo()
+        if action:
+            self.statusBar().showMessage(f'已重做：{action.description}', 3000)
+            # TODO: 根据 action.action_type 执行实际的重做逻辑
+        else:
+            self.statusBar().showMessage('没有可重做的操作', 2000)
+    
+    def clear_undo_history(self):
+        """清空撤销历史"""
+        if not self.undo_manager:
+            return
+        
+        reply = QMessageBox.question(
+            self, '确认',
+            '确定要清空所有撤销/重做历史吗？\n\n此操作不可恢复。',
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            self.undo_manager.clear()
+            self.statusBar().showMessage('撤销历史已清空', 2000)
+    
+    def _update_undo_actions(self):
+        """更新撤销/重做菜单项状态"""
+        if self.undo_action and self.undo_manager:
+            self.undo_action.setEnabled(self.undo_manager.can_undo())
+        if self.redo_action and self.undo_manager:
+            self.redo_action.setEnabled(self.undo_manager.can_redo())
+    
+    # ==================== 撤销/重做功能结束 ====================
     
     def open_file_preview(self):
         """打开文件预览"""
@@ -1862,6 +1979,31 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage('格式化配置已保存', 3000)
         except Exception as e:
             QMessageBox.critical(self, '错误', f'打开配置失败：{e}')
+    
+    def open_document_snapshot(self):
+        """打开文档快照管理对话框 (v2.1.6 新增)"""
+        try:
+            from document_state_dialog import DocumentStateDialog
+            
+            # 如果有当前打开的文件，传递文件路径
+            file_path = getattr(self, 'current_file_path', None)
+            dialog = DocumentStateDialog(file_path=file_path, parent=self)
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开文档快照管理失败：{e}')
+    
+    def open_config_snapshot(self):
+        """打开配置快照管理对话框 (v2.1.6 新增)"""
+        try:
+            from config_snapshot_dialog import ConfigSnapshotDialog
+            from format_config import FormatConfig
+            
+            # 获取当前配置
+            config = FormatConfig()
+            dialog = ConfigSnapshotDialog(config=config, parent=self)
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开配置快照管理失败：{e}')
     
     def check_update(self):
         """检查更新"""
@@ -3395,6 +3537,12 @@ class RecognizePage(GlassEffectPage):
         self.result_text.setPlainText('正在处理...')
         
         try:
+            # 记录格式化前的状态 (v2.1.4 新增)
+            before_state = {
+                'file': self.current_file,
+                'template': self.selected_template.template_name if self.selected_template else None
+            }
+
             result = DocumentFormatter.format(self.current_file, output_path, self.selected_template)
             
             if result.success:
@@ -3403,6 +3551,22 @@ class RecognizePage(GlassEffectPage):
                     text += f"• {change['type']}: {change['detail']}\n"
                 self.result_text.setPlainText(text)
                 self.save_as_btn.setEnabled(True)
+                
+                # 记录撤销操作 (v2.1.4 新增)
+                if self.undo_manager:
+                    after_state = {
+                        'file': output_path,
+                        'template': self.selected_template.template_name if self.selected_template else None,
+                        'changes': result.changes
+                    }
+                    action = self.undo_manager.create_format_action(
+                        file_path=self.current_file,
+                        before_format=before_state,
+                        after_format=after_state
+                    )
+                    self.undo_manager.push(action)
+                    self._update_undo_actions()
+                    self.statusBar().showMessage('格式化完成，已记录撤销点', 3000)
             else:
                 self.result_text.setPlainText(f"✗ 格式化失败\n\n错误:\n" + '\n'.join(result.errors))
         except Exception as e:

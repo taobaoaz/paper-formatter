@@ -237,21 +237,203 @@ class FormatConfig:
         """
         return self.load_config(path)
     
-    def validate_config(self):
+    def backup_config(self, backup_dir=None):
+        """
+        备份当前配置
+        
+        参数：
+        - backup_dir: 备份目录（可选）
+        
+        返回：
+        - str: 备份文件路径，失败返回 None
+        """
+        try:
+            from datetime import datetime
+            
+            if not backup_dir:
+                from pathlib import Path
+                backup_dir = Path.home() / '.paper_formatter' / 'backups'
+                backup_dir.mkdir(exist_ok=True)
+            elif not os.path.exists(backup_dir):
+                os.makedirs(backup_dir)
+            
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_path = os.path.join(backup_dir, f'format_config_{timestamp}.json')
+            
+            if self.save_config(backup_path):
+                print(f'✓ 配置已备份：{backup_path}')
+                return backup_path
+            else:
+                return None
+                
+        except Exception as e:
+            print(f'✗ 备份配置失败：{e}')
+            return None
+    
+    def auto_fix_config(self):
+        """
+        自动修复配置问题
+        
+        返回：
+        - tuple: (修复数量，修复报告)
+        """
+        fixes = []
+        
+        # 自动修复字体
+        font = self.config.get('font', {})
+        if not font.get('chinese_font'):
+            self.config['font']['chinese_font'] = '宋体'
+            fixes.append('设置默认中文字体：宋体')
+        
+        if not font.get('english_font'):
+            self.config['font']['english_font'] = 'Times New Roman'
+            fixes.append('设置默认英文字体：Times New Roman')
+        
+        # 自动修复字号
+        font_size_pt = font.get('font_size_pt', 0)
+        if font_size_pt <= 0:
+            self.config['font']['font_size_pt'] = 12
+            fixes.append('设置默认字号：12pt')
+        elif font_size_pt > 72:
+            self.config['font']['font_size_pt'] = 72
+            fixes.append('修正字号为最大值：72pt')
+        
+        # 自动修复行距
+        line_spacing = font.get('line_spacing', 0)
+        if line_spacing <= 0:
+            self.config['font']['line_spacing'] = 1.5
+            fixes.append('设置默认行距：1.5 倍')
+        elif line_spacing > 3.0:
+            self.config['font']['line_spacing'] = 3.0
+            fixes.append('修正行距为最大值：3.0 倍')
+        
+        # 自动修复页边距
+        page = self.config.get('page', {})
+        if page.get('margin_left_cm', 0) <= 0:
+            self.config['page']['margin_left_cm'] = 3.17
+            fixes.append('设置默认左边距：3.17cm')
+        if page.get('margin_right_cm', 0) <= 0:
+            self.config['page']['margin_right_cm'] = 3.17
+            fixes.append('设置默认右边距：3.17cm')
+        if page.get('margin_top_cm', 0) <= 0:
+            self.config['page']['margin_top_cm'] = 2.54
+            fixes.append('设置默认上边距：2.54cm')
+        if page.get('margin_bottom_cm', 0) <= 0:
+            self.config['page']['margin_bottom_cm'] = 2.54
+            fixes.append('设置默认下边距：2.54cm')
+        
+        # 自动修复纸张尺寸
+        width = page.get('width_cm', 0)
+        height = page.get('height_cm', 0)
+        if width <= 0 or height <= 0:
+            self.config['page']['width_cm'] = 21
+            self.config['page']['height_cm'] = 29.7
+            fixes.append('设置默认纸张尺寸：A4 (21x29.7cm)')
+        elif width > 50:
+            self.config['page']['width_cm'] = 50
+            fixes.append('修正纸张宽度为最大值：50cm')
+        elif height > 100:
+            self.config['page']['height_cm'] = 100
+            fixes.append('修正纸张高度为最大值：100cm')
+        
+        report = f'自动修复完成，共修复 {len(fixes)} 个问题:\n' + '\n'.join([f'  ✓ {f}' for f in fixes]) if fixes else '无需修复'
+        
+        return len(fixes), report
+    
+    def compare_configs(self, other_config):
+        """
+        比较两个配置的差异
+        
+        参数：
+        - other_config: 另一个配置对象或配置字典
+        
+        返回：
+        - dict: 差异字典 {section: {key: (old_value, new_value)}}
+        """
+        if isinstance(other_config, FormatConfig):
+            other = other_config.config
+        else:
+            other = other_config
+        
+        differences = {}
+        
+        for section in set(list(self.config.keys()) + list(other.keys())):
+            section_diff = {}
+            self_section = self.config.get(section, {})
+            other_section = other.get(section, {})
+            
+            all_keys = set(list(self_section.keys()) + list(other_section.keys()))
+            
+            for key in all_keys:
+                self_value = self_section.get(key)
+                other_value = other_section.get(key)
+                
+                if self_value != other_value:
+                    section_diff[key] = (self_value, other_value)
+            
+            if section_diff:
+                differences[section] = section_diff
+        
+        return differences
+    
+    def get_config_diff_report(self, other_config):
+        """
+        获取配置差异报告
+        
+        参数：
+        - other_config: 另一个配置对象
+        
+        返回：
+        - str: 差异报告文本
+        """
+        differences = self.compare_configs(other_config)
+        
+        if not differences:
+            return '两个配置完全相同'
+        
+        report = ['配置差异报告', '=' * 40]
+        
+        for section, section_diff in differences.items():
+            report.append(f'\n[{section}]')
+            for key, (old_val, new_val) in section_diff.items():
+                report.append(f'  {key}: {old_val} → {new_val}')
+        
+        return '\n'.join(report)
+    
+    def validate_config(self, strict=False):
         """
         验证配置
         
+        参数：
+        - strict: 是否严格模式（严格模式下警告也算错误）
+        
         返回：
-        - tuple: (是否有效，错误列表)
+        - tuple: (是否有效，错误列表，警告列表)
         """
         errors = []
+        warnings = []
         
         # 验证字体配置
         font = self.config.get('font', {})
         if not font.get('chinese_font'):
             errors.append('中文字体不能为空')
+        elif font.get('chinese_font') not in self._get_valid_chinese_fonts():
+            warnings.append(f"中文字体 '{font.get('chinese_font')}' 可能不可用")
+        
         if not font.get('english_font'):
             errors.append('英文字体不能为空')
+        elif font.get('english_font') not in self._get_valid_english_fonts():
+            warnings.append(f"英文字体 '{font.get('english_font')}' 可能不可用")
+        
+        # 验证字号
+        font_size_pt = font.get('font_size_pt', 0)
+        if font_size_pt <= 0 or font_size_pt > 72:
+            errors.append(f"字号必须在 0-72pt 之间，当前为 {font_size_pt}pt")
+        
+        # 验证行距
+        line_spacing = font.get('line_spacing', 0)
+        if line_spacing <= 0 or line_spacing > 3.0:
+            errors.append(f"行距必须在 0-3.0 之间，当前为 {line_spacing}")
         
         # 验证页面配置
         page = self.config.get('page', {})
@@ -259,8 +441,78 @@ class FormatConfig:
             errors.append('左边距必须大于 0')
         if page.get('margin_right_cm', 0) <= 0:
             errors.append('右边距必须大于 0')
+        if page.get('margin_top_cm', 0) <= 0:
+            errors.append('上边距必须大于 0')
+        if page.get('margin_bottom_cm', 0) <= 0:
+            errors.append('下边距必须大于 0')
         
-        return len(errors) == 0, errors
+        # 验证纸张尺寸
+        width = page.get('width_cm', 0)
+        height = page.get('height_cm', 0)
+        if width <= 0 or height <= 0:
+            errors.append('纸张尺寸必须大于 0')
+        elif width > 50 or height > 100:
+            warnings.append('纸张尺寸异常，请确认是否正确')
+        
+        # 验证段落配置
+        paragraph = self.config.get('paragraph', {})
+        first_line_indent = paragraph.get('first_line_indent', 0)
+        if first_line_indent < 0 or first_line_indent > 10:
+            warnings.append(f"首行缩进 {first_line_indent} 字符可能不合理")
+        
+        # 验证标题配置
+        heading = self.config.get('heading', {})
+        for level in ['level_1', 'level_2', 'level_3']:
+            if level in heading:
+                h = heading[level]
+                h_size = h.get('font_size_pt', 0)
+                if h_size <= 0 or h_size > 72:
+                    errors.append(f"{level} 字号必须在 0-72pt 之间")
+        
+        # 严格模式下，警告也算错误
+        if strict:
+            errors.extend(warnings)
+            warnings = []
+        
+        return len(errors) == 0, errors, warnings
+    
+    def _get_valid_chinese_fonts(self):
+        """获取有效的中文字体列表"""
+        return ['宋体', '黑体', '楷体', '仿宋', '微软雅黑', '思源宋体', '思源黑体', 
+                '华文宋体', '华文黑体', '方正宋体', '方正黑体', '隶书']
+    
+    def _get_valid_english_fonts(self):
+        """获取有效的英文字体列表"""
+        return ['Times New Roman', 'Arial', 'Calibri', 'Cambria', 'Georgia', 
+                'Verdana', 'Helvetica', 'Garamond', 'Courier New']
+    
+    def get_validation_report(self):
+        """
+        获取配置验证报告
+        
+        返回：
+        - str: 验证报告文本
+        """
+        is_valid, errors, warnings = self.validate_config()
+        
+        report = []
+        report.append('配置验证报告')
+        report.append('=' * 40)
+        
+        if is_valid and not warnings:
+            report.append('✅ 配置验证通过，无问题')
+        elif is_valid:
+            report.append(f'⚠️ 配置验证通过，但有 {len(warnings)} 个警告')
+            for w in warnings:
+                report.append(f'  - {w}')
+        else:
+            report.append(f'❌ 配置验证失败：{len(errors)} 个错误，{len(warnings)} 个警告')
+            for e in errors:
+                report.append(f'  ✗ {e}')
+            for w in warnings:
+                report.append(f'  ⚠ {w}')
+        
+        return '\n'.join(report)
     
     def get_config_summary(self):
         """
