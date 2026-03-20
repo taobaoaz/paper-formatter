@@ -30,11 +30,43 @@ class PDFExporter:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4
             from reportlab.platypus import SimpleDocTemplate, Paragraph
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            
             self.reportlab_available = True
             print("✅ reportlab 可用")
-        except ImportError:
-            print("⚠️ reportlab 未安装，PDF 导出功能受限")
+            
+            # 注册中文字体
+            self._register_chinese_fonts()
+            
+        except ImportError as e:
+            print(f"⚠️ reportlab 未安装，PDF 导出功能受限：{e}")
             self.reportlab_available = False
+    
+    def _register_chinese_fonts(self):
+        """注册中文字体 (v2.2.1 新增)"""
+        try:
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            
+            # 尝试注册常见中文字体
+            font_paths = {
+                'SimSun': ['simsun.ttf', 'C:/Windows/Fonts/simsun.ttf', '/usr/share/fonts/truetype/simsun.ttf'],
+                'SimHei': ['simhei.ttf', 'C:/Windows/Fonts/simhei.ttf', '/usr/share/fonts/truetype/simhei.ttf'],
+                'KaiTi': ['simkai.ttf', 'C:/Windows/Fonts/simkai.ttf', '/usr/share/fonts/truetype/simkai.ttf'],
+            }
+            
+            for font_name, paths in font_paths.items():
+                for path in paths:
+                    if os.path.exists(path):
+                        pdfmetrics.registerFont(TTFont(font_name, path))
+                        print(f"✅ 注册中文字体：{font_name} ({path})")
+                        break
+                else:
+                    print(f"⚠️ 未找到中文字体：{font_name}")
+                    
+        except Exception as e:
+            print(f"⚠️ 注册中文字体失败：{e}")
     
     def export_docx_to_pdf(self, docx_path: str, pdf_path: str, 
                           options: Dict[str, Any] = None) -> bool:

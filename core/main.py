@@ -1977,6 +1977,12 @@ class MainWindow(QMainWindow):
         pdf_export_action.triggered.connect(self.open_pdf_export)
         tools_menu.addAction(pdf_export_action)
         
+        # 批量 PDF 导出 (v2.2.1 新增)
+        batch_pdf_action = QAction('📦 批量导出 PDF', self)
+        batch_pdf_action.setShortcut('Ctrl+Shift+P')
+        batch_pdf_action.triggered.connect(self.open_batch_pdf_export)
+        tools_menu.addAction(batch_pdf_action)
+        
         tools_menu.addSeparator()
         
         # 检查更新
@@ -2186,6 +2192,17 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage('✅ PDF 导出完成', 3000)
         except Exception as e:
             QMessageBox.critical(self, '错误', f'打开 PDF 导出失败：{e}')
+    
+    def open_batch_pdf_export(self):
+        """打开批量 PDF 导出对话框 (v2.2.1 新增)"""
+        try:
+            from batch_pdf_export_dialog import BatchPDFExportDialog
+            
+            dialog = BatchPDFExportDialog(parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                self.statusBar().showMessage('✅ 批量 PDF 导出完成', 5000)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开批量 PDF 导出失败：{e}')
     
     def open_cover_declaration_config(self):
         """打开封面和声明页配置对话框"""
