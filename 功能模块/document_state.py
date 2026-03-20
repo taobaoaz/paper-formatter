@@ -32,6 +32,23 @@ class DocumentState:
     checksum: str = ""  # 文件校验和（可选）
     metadata: Dict[str, Any] = field(default_factory=dict)  # 元数据
     
+    @property
+    def is_important(self) -> bool:
+        """是否重要快照 (v2.1.8 新增)"""
+        return self.metadata.get('is_important', False)
+    
+    def mark_as_important(self, reason: str = ""):
+        """标记为重要快照 (v2.1.8 新增)"""
+        self.metadata['is_important'] = True
+        self.metadata['importance_reason'] = reason
+        self.metadata['importance_marked_at'] = datetime.now().timestamp()
+    
+    def unmark_as_important(self):
+        """取消重要标记 (v2.1.8 新增)"""
+        self.metadata['is_important'] = False
+        self.metadata.pop('importance_reason', None)
+        self.metadata.pop('importance_marked_at', None)
+    
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -138,7 +155,7 @@ class DocumentStateManager:
         self.max_states = 20  # 最多保存 20 个状态
     
     def create_snapshot(self, file_path: str, description: str = "", 
-                       snapshot_type: str = "full") -> DocumentState:
+                       snapshot_type: str = "full", metadata: Dict[str, Any] = None) -> DocumentState:
         """
         创建文档快照
         
@@ -146,6 +163,7 @@ class DocumentStateManager:
             file_path: 文档文件路径
             description: 快照描述
             snapshot_type: 快照类型（full 或 incremental）
+            metadata: 元数据（v2.1.8 新增）
         
         Returns:
             DocumentState 对象
@@ -171,7 +189,8 @@ class DocumentStateManager:
             snapshot_path=snapshot_path,
             description=description,
             state_type=snapshot_type,
-            file_size=file_size
+            file_size=file_size,
+            metadata=metadata or {}
         )
         
         # 添加到历史
