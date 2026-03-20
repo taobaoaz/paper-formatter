@@ -1301,6 +1301,11 @@ class MainWindow(QMainWindow):
         self.document_state_manager = None
         self._init_document_state_manager()
         
+        # 初始化自动备份管理器 (v2.1.9 新增)
+        self.auto_backup_manager = None
+        self.backup_timer = None
+        self._init_auto_backup()
+        
         self.init_ui()
         
         # 延迟检查更新（5 秒后）
@@ -1330,7 +1335,89 @@ class MainWindow(QMainWindow):
             undo_count = undo_manager.get_undo_count()
             redo_count = undo_manager.get_redo_count()
             if undo_count > 0 or redo_count > 0:
-                self.status_bar.showMessage(f'撤销：{undo_count} 步 | 重做：{redo_count} 步', 5000)
+                self.status_bar.showMessage(f'撤销：{undo_count} 步 | 重做：{redo_count} 步', 5000)    
+    def _init_auto_backup(self):
+        """初始化自动备份管理器 (v2.1.9 新增)"""
+        try:
+            from auto_backup import AutoBackupManager, BackupConfig
+            
+            self.auto_backup_manager = AutoBackupManager(
+                self.document_state_manager,
+                BackupConfig()
+            )
+            self.auto_backup_manager.load_config()
+            
+            from PyQt5.QtCore import QTimer
+            self.backup_timer = QTimer()
+            self.backup_timer.timeout.connect(self._check_auto_backup)
+            self.backup_timer.start(60000)
+            
+            self.update_backup_status_display()
+            print("自动备份管理器初始化成功")
+        except Exception as e:
+            print(f"初始化自动备份管理器失败：{e}")
+            self.auto_backup_manager = None
+    
+    def _check_auto_backup(self):
+        """检查并执行自动备份 (v2.1.9 新增)"""
+        if not self.auto_backup_manager or not self.current_file:
+            return
+        
+        try:
+            if self.auto_backup_manager.should_backup(self.current_file):
+                snapshot = self.auto_backup_manager.create_backup(
+                    self.current_file,
+                    f'自动备份 - {__import__("datetime").datetime.now().strftime("%H:%M")}'
+                )
+                if snapshot:
+                    self.update_snapshot_count_display()
+                    if self.auto_backup_manager.config.notify_on_backup:
+                        self.status_bar.showMessage('✅ 已自动创建备份', 3000)
+                    self.update_backup_status_display()
+        except Exception as e:
+            print(f"自动备份检查失败：{e}")
+    
+    def update_backup_status_display(self):
+        """更新状态栏备份状态显示 (v2.1.9 新增)"""
+        if not hasattr(self, 'backup_status_label') or not self.auto_backup_manager:
+            return
+        
+        try:
+            status = self.auto_backup_manager.get_backup_status()
+            if status['enabled']:
+                if status['next_backup_in_minutes'] is not None:
+                    self.backup_status_label.setText(
+                        f'🔄 自动备份：{status["next_backup_in_minutes"]}分钟后'
+                    )
+                else:
+                    self.backup_status_label.setText('🔄 自动备份：已启用')
+            else:
+                self.backup_status_label.setText('⏸️ 自动备份：已禁用')
+        except Exception as e:
+            print(f"更新备份状态显示失败：{e}")
+    
+    def open_auto_backup_settings(self):
+        """打开自动备份设置对话框 (v2.1.9 新增)"""
+        try:
+            from auto_backup_settings_dialog import AutoBackupSettingsDialog
+            
+            if not self.auto_backup_manager:
+                QMessageBox.warning(self, '警告', '自动备份管理器未初始化')
+                return
+            
+            current_config = self.auto_backup_manager.config
+            dialog = AutoBackupSettingsDialog(current_config, self)
+            if dialog.exec_() == QDialog.Accepted:
+                new_config = dialog.get_config()
+                if new_config:
+                    self.auto_backup_manager.config = new_config
+                    self.auto_backup_manager.save_config()
+                    self.update_backup_status_display()
+                    self.status_bar.showMessage('✅ 自动备份配置已保存', 3000)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开设置失败：{e}')
+    
+
     
     def _init_document_state_manager(self):
         """初始化文档状态管理器 (v2.1.7 新增)"""
@@ -1790,7 +1877,15 @@ class MainWindow(QMainWindow):
         self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
         view_menu.addAction(self.always_on_top_action)
         
-        settings_menu = menubar.addMenu('设置(&S)')
+        settings_menu = menubar.addMenu('设置 (&S)')
+        
+        # 自动备份设置 (v2.1.9 新增)
+        auto_backup_action = QAction('🔄 自动备份设置', self)
+        auto_backup_action.setShortcut('Ctrl+Alt+B')
+        auto_backup_action.triggered.connect(self.open_auto_backup_settings)
+        settings_menu.addAction(auto_backup_action)
+        
+        settings_menu.addSeparator()
         
         settings_action = QAction('偏好设置', self)
         settings_action.triggered.connect(self.show_settings)
@@ -1909,6 +2004,13 @@ class MainWindow(QMainWindow):
         self.snapshot_count_label.mousePressEvent = lambda e: self.open_document_snapshot()
         self.snapshot_count_label.setToolTip('点击打开文档快照管理')
         self.status_bar.addPermanentWidget(self.snapshot_count_label)
+        
+        # v2.1.9 新增：备份状态显示
+        self.backup_status_label = QLabel('🔄 自动备份：初始化中...')
+        self.backup_status_label.setStyleSheet('color: #666; padding: 2px 8px;')
+        self.backup_status_label.setToolTip('点击打开自动备份设置')
+        self.backup_status_label.mousePressEvent = lambda e: self.open_auto_backup_settings()
+        self.status_bar.addPermanentWidget(self.backup_status_label)
     
     def show_settings(self):
         dialog = SettingsDialog(self)
