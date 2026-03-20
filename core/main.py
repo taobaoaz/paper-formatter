@@ -1891,7 +1891,13 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.show_settings)
         settings_menu.addAction(settings_action)
         
-        help_menu = menubar.addMenu('帮助(&H)')
+        help_menu = menubar.addMenu('帮助 (&H)')
+        
+        # 字体管理 (v2.2.2 新增)
+        font_manager_action = QAction('🔤 字体管理', self)
+        font_manager_action.setShortcut('Ctrl+Alt+F')
+        font_manager_action.triggered.connect(self.open_font_manager)
+        help_menu.addAction(font_manager_action)
         
         # 编辑菜单 (v2.1.4 新增)
         edit_menu = menubar.addMenu('编辑 (&E)')
@@ -2203,6 +2209,16 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage('✅ 批量 PDF 导出完成', 5000)
         except Exception as e:
             QMessageBox.critical(self, '错误', f'打开批量 PDF 导出失败：{e}')
+    
+    def open_font_manager(self):
+        """打开字体管理对话框 (v2.2.2 新增)"""
+        try:
+            from font_manager_dialog import FontManagerDialog
+            
+            dialog = FontManagerDialog(parent=self)
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开字体管理失败：{e}')
     
     def open_cover_declaration_config(self):
         """打开封面和声明页配置对话框"""
