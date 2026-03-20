@@ -32,6 +32,10 @@ jobs:
       run: |
         pyinstaller --onefile --windowed \
           --name="paper-formatter" \
+          --add-data "modules/parsers:parsers" \
+          --paths modules \
+          --paths core \
+          --hidden-import parsers \
           --icon=./installer/app_icon.ico \
           ./core/main.py
     
