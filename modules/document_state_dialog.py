@@ -54,6 +54,10 @@ class DocumentStateDialog(QDialog):
         # 底部按钮
         button_layout = self.create_button_layout()
         layout.addLayout(button_layout)
+        
+        # 重要性标记工具栏 (v2.1.9 新增)
+        importance_toolbar = self.create_importance_toolbar()
+        layout.insertWidget(0, importance_toolbar)
     
     def create_toolbar(self):
         """创建工具栏"""
@@ -77,6 +81,39 @@ class DocumentStateDialog(QDialog):
         close_btn = QPushButton('❌ 关闭')
         close_btn.clicked.connect(self.reject)
         layout.addWidget(close_btn)
+        
+        return toolbar
+    
+    def create_importance_toolbar(self):
+        """创建重要性标记工具栏 (v2.1.9 新增)"""
+        from PyQt5.QtWidgets import QToolBar
+        
+        toolbar = QToolBar()
+        toolbar.setMovable(False)
+        toolbar.setIconVisibleInMenu(False)
+        
+        # 标记为重要
+        self.mark_important_action = QAction('⭐ 标记为重要', self)
+        self.mark_important_action.setToolTip('标记选中的快照为重要，不会被自动清理')
+        self.mark_important_action.triggered.connect(self.mark_as_important)
+        self.mark_important_action.setEnabled(False)
+        toolbar.addAction(self.mark_important_action)
+        
+        # 取消重要标记
+        self.unmark_important_action = QAction('🌟 取消重要标记', self)
+        self.unmark_important_action.setToolTip('取消选中的重要快照标记')
+        self.unmark_important_action.triggered.connect(self.unmark_as_important)
+        self.unmark_important_action.setEnabled(False)
+        toolbar.addAction(self.unmark_important_action)
+        
+        toolbar.addSeparator()
+        
+        # 筛选重要快照
+        self.filter_important_action = QAction('🔍 只看重要', self)
+        self.filter_important_action.setCheckable(True)
+        self.filter_important_action.setToolTip('只显示重要快照')
+        self.filter_important_action.toggled.connect(self.filter_snapshots)
+        toolbar.addAction(self.filter_important_action)
         
         return toolbar
     
@@ -181,6 +218,10 @@ class DocumentStateDialog(QDialog):
         # 应用过滤
         filtered_states = self.apply_filters(states)
         
+        # v2.1.9 新增：只看重要筛选
+        if hasattr(self, 'filter_important_action') and self.filter_important_action.isChecked():
+            filtered_states = [s for s in filtered_states if s.is_important]
+        
         # 填充表格
         for state in filtered_states:
             row = self.snapshot_table.rowCount()
@@ -247,6 +288,7 @@ class DocumentStateDialog(QDialog):
         if not selected_rows:
             self.selected_state = None
             self.update_button_state()
+            self.update_importance_button_state()
             self.preview_text.clear()
             return
         
@@ -256,9 +298,20 @@ class DocumentStateDialog(QDialog):
         
         # 更新按钮状态
         self.update_button_state()
+        self.update_importance_button_state()
         
         # 显示详情
         self.show_preview()
+    
+    def update_importance_button_state(self):
+        """更新重要性标记按钮状态 (v2.1.9 新增)"""
+        has_selection = self.selected_state is not None
+        is_important = has_selection and self.selected_state.is_important
+        
+        if hasattr(self, 'mark_important_action'):
+            self.mark_important_action.setEnabled(has_selection and not is_important)
+        if hasattr(self, 'unmark_important_action'):
+            self.unmark_important_action.setEnabled(has_selection and is_important)
     
     def update_button_state(self):
         """更新按钮状态"""
