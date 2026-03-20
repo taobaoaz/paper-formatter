@@ -33,41 +33,46 @@ jobs:
         PYTHONPATH: "功能模块;核心模块"
       run: |
         pyinstaller --onefile --windowed \
-          --name="论文排版优化器" \
-          --add-data "功能模块/parsers;parsers" \
-          --add-data "功能模块/rules;rules" \
+          --name="paper-formatter" \
+          --add-data "功能模块/parsers:parsers" \
+          --add-data "功能模块/rules:rules" \
           --paths 功能模块 \
           --paths 核心模块 \
           --hidden-import parsers \
           --hidden-import rules \
           ./核心模块/main.py
     
+    - name: Rename EXE (remove Chinese characters)
+      run: |
+        mv dist/paper-formatter.exe dist/paper-formatter-windows.exe || true
+        mv dist/论文排版优化器.exe dist/paper-formatter-windows.exe 2>/dev/null || true
+    
     - name: Upload EXE
       uses: actions/upload-artifact@v4
       with:
         name: paper-formatter-windows
-        path: dist/论文排版优化器.exe
+        path: dist/paper-formatter-windows.exe
         retention-days: 30
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/论文排版优化器.exe
+        files: dist/paper-formatter-windows.exe
         generate_release_notes: false
         draft: true
         body: |
-          ## 📦 论文排版优化器 Windows 版本
+          ## Paper Formatter Windows Build
 
-          ### 下载地址
-          - 点击上方的 `论文排版优化器-Windows.exe` 下载
+          ### Download
+          Click on `paper-formatter-windows.exe` above to download.
 
-          ### 安装说明
-          1. 下载 `.exe` 文件
-          2. 双击运行即可使用
-          3. 无需安装，绿色版
+          ### Usage
+          1. Download the .exe file
+          2. Double-click to run
+          3. No installation needed, portable version
 
-          ### 更新内容
-          请查看项目中的 `RELEASE_NOTES_v*.md` 文件获取详细信息。
+          ### Release Notes
+          Check `RELEASE_NOTES_v*.md` files in the repository for details.
 
           ---
 
