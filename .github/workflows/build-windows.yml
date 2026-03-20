@@ -26,7 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
-        pip install -r ./启动文件/requirements.txt
+        pip install -r ./launcher/requirements.txt
     
     - name: Build EXE
       env:
