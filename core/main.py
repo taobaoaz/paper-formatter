@@ -1971,6 +1971,14 @@ class MainWindow(QMainWindow):
         
         tools_menu.addSeparator()
         
+        # PDF 导出 (v2.2.0 新增)
+        pdf_export_action = QAction('📄 导出为 PDF', self)
+        pdf_export_action.setShortcut('Ctrl+Alt+P')
+        pdf_export_action.triggered.connect(self.open_pdf_export)
+        tools_menu.addAction(pdf_export_action)
+        
+        tools_menu.addSeparator()
+        
         # 检查更新
         update_action = QAction('🔄 检查更新', self)
         update_action.setShortcut('Ctrl+U')
@@ -2166,6 +2174,18 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage('批量处理完成', 5000)
         except Exception as e:
             QMessageBox.critical(self, '错误', f'批量处理失败：{e}')
+    
+    def open_pdf_export(self):
+        """打开 PDF 导出对话框 (v2.2.0 新增)"""
+        try:
+            from pdf_export_dialog import PDFExportDialog
+            
+            file_path = self.current_file
+            dialog = PDFExportDialog(file_path=file_path, parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                self.statusBar().showMessage('✅ PDF 导出完成', 3000)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'打开 PDF 导出失败：{e}')
     
     def open_cover_declaration_config(self):
         """打开封面和声明页配置对话框"""
