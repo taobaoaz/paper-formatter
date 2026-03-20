@@ -33,12 +33,11 @@ jobs:
         pyinstaller --onefile --windowed \
           --name="paper-formatter" \
           --icon=./installer/app_icon.ico \
-          ./核心模块/main.py
+          ./core/main.py
     
     - name: Rename EXE (remove Chinese characters)
       run: |
         mv dist/paper-formatter.exe dist/paper-formatter-installer.exe || true
-        mv dist/论文排版优化器.exe dist/paper-formatter-installer.exe 2>/dev/null || true
     
     - name: Upload EXE
       uses: actions/upload-artifact@v4

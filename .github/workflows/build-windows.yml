@@ -30,22 +30,21 @@ jobs:
     
     - name: Build EXE
       env:
-        PYTHONPATH: "功能模块;核心模块"
+        PYTHONPATH: "modules;core"
       run: |
         pyinstaller --onefile --windowed \
           --name="paper-formatter" \
-          --add-data "功能模块/parsers:parsers" \
-          --add-data "功能模块/rules:rules" \
-          --paths 功能模块 \
-          --paths 核心模块 \
+          --add-data "modules/parsers:parsers" \
+          --add-data "modules/rules:rules" \
+          --paths modules \
+          --paths core \
           --hidden-import parsers \
           --hidden-import rules \
-          ./核心模块/main.py
+          ./core/main.py
     
     - name: Rename EXE (remove Chinese characters)
       run: |
         mv dist/paper-formatter.exe dist/paper-formatter-windows.exe || true
-        mv dist/论文排版优化器.exe dist/paper-formatter-windows.exe 2>/dev/null || true
     
     - name: Upload EXE
       uses: actions/upload-artifact@v4
