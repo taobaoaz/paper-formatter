@@ -1297,6 +1297,10 @@ class MainWindow(QMainWindow):
         self.undo_manager = None
         self._init_undo_manager()
         
+        # 初始化文档状态管理器 (v2.1.7 新增)
+        self.document_state_manager = None
+        self._init_document_state_manager()
+        
         self.init_ui()
         
         # 延迟检查更新（5 秒后）
@@ -1327,6 +1331,32 @@ class MainWindow(QMainWindow):
             redo_count = undo_manager.get_redo_count()
             if undo_count > 0 or redo_count > 0:
                 self.status_bar.showMessage(f'撤销：{undo_count} 步 | 重做：{redo_count} 步', 5000)
+    
+    def _init_document_state_manager(self):
+        """初始化文档状态管理器 (v2.1.7 新增)"""
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '功能模块'))
+            from document_state import DocumentStateManager
+            
+            # 使用配置目录保存快照
+            config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.config', 'snapshots')
+            self.document_state_manager = DocumentStateManager(snapshot_dir=config_dir)
+            
+            # 更新快照数量显示
+            self.update_snapshot_count_display()
+        except Exception as e:
+            print(f"初始化文档状态管理器失败：{e}")
+            self.document_state_manager = None
+    
+    def update_snapshot_count_display(self):
+        """更新状态栏快照数量显示 (v2.1.7 新增)"""
+        if hasattr(self, 'document_state_manager') and self.document_state_manager and hasattr(self, 'snapshot_count_label'):
+            try:
+                states = self.document_state_manager.get_states(limit=100)
+                self.snapshot_count_label.setText(f'📸 {len(states)} 个快照')
+            except Exception as e:
+                print(f"更新快照数量显示失败：{e}")
     
     def auto_check_update(self):
         """自动检查更新（不显示对话框，只在后台检查）"""
@@ -1868,9 +1898,17 @@ class MainWindow(QMainWindow):
         self.show()
     
     def create_status_bar(self):
+        """创建状态栏 (v2.1.7 增强)"""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage('就绪')
+        
+        # v2.1.7 新增：快照数量显示
+        self.snapshot_count_label = QLabel('📸 0 个快照')
+        self.snapshot_count_label.setStyleSheet('color: #666; padding: 2px 8px;')
+        self.snapshot_count_label.mousePressEvent = lambda e: self.open_document_snapshot()
+        self.snapshot_count_label.setToolTip('点击打开文档快照管理')
+        self.status_bar.addPermanentWidget(self.snapshot_count_label)
     
     def show_settings(self):
         dialog = SettingsDialog(self)
@@ -3537,10 +3575,25 @@ class RecognizePage(GlassEffectPage):
         self.result_text.setPlainText('正在处理...')
         
         try:
+            # v2.1.7 新增：格式化前自动创建文档快照
+            snapshot = None
+            if hasattr(self, 'document_state_manager') and self.document_state_manager:
+                try:
+                    snapshot = self.document_state_manager.create_snapshot(
+                        file_path=self.current_file,
+                        description=f'格式化前 - {datetime.now().strftime("%H:%M:%S")}'
+                    )
+                    self.statusBar().showMessage(f'已创建格式化前快照', 2000)
+                    self.update_snapshot_count_display()
+                except Exception as e:
+                    print(f"创建快照失败：{e}")
+                    # 快照创建失败不影响格式化流程
+            
             # 记录格式化前的状态 (v2.1.4 新增)
             before_state = {
                 'file': self.current_file,
-                'template': self.selected_template.template_name if self.selected_template else None
+                'template': self.selected_template.template_name if self.selected_template else None,
+                'snapshot_path': snapshot.snapshot_path if snapshot else None
             }
 
             result = DocumentFormatter.format(self.current_file, output_path, self.selected_template)
