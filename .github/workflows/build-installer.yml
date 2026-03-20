@@ -43,7 +43,15 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: dist/论文排版优化器.exe
-        generate_release_notes: true
+        generate_release_notes: false
         draft: true
+        body: |
+          ## 更新内容
+
+          请查看 RELEASE_NOTES 文件获取详细信息。
+
+          ---
+
+          **注意：** 自动生成的 release notes 可能包含编码问题，请手动编辑。
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
