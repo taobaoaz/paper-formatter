@@ -9,6 +9,11 @@ jobs:
   build-installer:
     runs-on: windows-latest
     
+    # 设置默认 shell 为 bash，避免编码问题
+    defaults:
+      run:
+        shell: bash
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -16,12 +21,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    
-    - name: Set UTF-8 encoding
-      run: |
-        $env:PYTHONUTF8=1
-        $env:PYTHONIOENCODING="utf-8"
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     
     - name: Install dependencies
       run: |
@@ -31,13 +30,17 @@ jobs:
     
     - name: Build EXE
       run: |
-        pyinstaller --onefile --windowed --name="论文排版优化器" --icon=installer/app_icon.ico ./核心模块/main.py
+        pyinstaller --onefile --windowed \
+          --name="论文排版优化器" \
+          --icon=./installer/app_icon.ico \
+          ./核心模块/main.py
     
     - name: Upload EXE
       uses: actions/upload-artifact@v4
       with:
-        name: 论文排版优化器-EXE
+        name: paper-formatter-exe
         path: dist/论文排版优化器.exe
+        retention-days: 30
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -46,12 +49,20 @@ jobs:
         generate_release_notes: false
         draft: true
         body: |
-          ## 更新内容
+          ## 📦 论文排版优化器 安装版
 
-          请查看 RELEASE_NOTES 文件获取详细信息。
+          ### 下载地址
+          - 点击上方的 `论文排版优化器-EXE.exe` 下载
+
+          ### 安装说明
+          1. 下载 `.exe` 文件
+          2. 双击运行即可使用
+
+          ### 更新内容
+          请查看项目中的 `RELEASE_NOTES_v*.md` 文件获取详细信息。
 
           ---
 
-          **注意：** 自动生成的 release notes 可能包含编码问题，请手动编辑。
+          **GitHub Actions Build** | **Draft Release**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

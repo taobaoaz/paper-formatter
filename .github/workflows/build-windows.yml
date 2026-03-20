@@ -9,6 +9,11 @@ jobs:
   build-windows:
     runs-on: windows-latest
     
+    # 设置默认 shell 为 bash，避免编码问题
+    defaults:
+      run:
+        shell: bash
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -17,35 +22,32 @@ jobs:
       with:
         python-version: '3.10'
     
-    - name: Set UTF-8 encoding
-      run: |
-        $env:PYTHONUTF8=1
-        $env:PYTHONIOENCODING="utf-8"
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
-        pip install -r 启动文件/requirements.txt
+        pip install -r ./启动文件/requirements.txt
     
     - name: Build EXE
+      env:
+        PYTHONPATH: "功能模块;核心模块"
       run: |
-        $env:PYTHONPATH="功能模块;核心模块;$env:PYTHONPATH"
-        pyinstaller --onefile --windowed --name="论文排版优化器" `
-          --add-data "功能模块/parsers;parsers" `
-          --add-data "功能模块/rules;rules" `
-          --paths 功能模块 `
-          --paths 核心模块 `
-          --hidden-import parsers `
-          --hidden-import rules `
-          核心模块/main.py
+        pyinstaller --onefile --windowed \
+          --name="论文排版优化器" \
+          --add-data "功能模块/parsers;parsers" \
+          --add-data "功能模块/rules;rules" \
+          --paths 功能模块 \
+          --paths 核心模块 \
+          --hidden-import parsers \
+          --hidden-import rules \
+          ./核心模块/main.py
     
     - name: Upload EXE
       uses: actions/upload-artifact@v4
       with:
-        name: 论文排版优化器-Windows
+        name: paper-formatter-windows
         path: dist/论文排版优化器.exe
+        retention-days: 30
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -54,12 +56,21 @@ jobs:
         generate_release_notes: false
         draft: true
         body: |
-          ## 更新内容
+          ## 📦 论文排版优化器 Windows 版本
 
-          请查看 RELEASE_NOTES 文件获取详细信息。
+          ### 下载地址
+          - 点击上方的 `论文排版优化器-Windows.exe` 下载
+
+          ### 安装说明
+          1. 下载 `.exe` 文件
+          2. 双击运行即可使用
+          3. 无需安装，绿色版
+
+          ### 更新内容
+          请查看项目中的 `RELEASE_NOTES_v*.md` 文件获取详细信息。
 
           ---
 
-          **注意：** 自动生成的 release notes 可能包含编码问题，请手动编辑。
+          **GitHub Actions Build** | **Draft Release**
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
