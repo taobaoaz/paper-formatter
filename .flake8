@@ -1,0 +1,114 @@
+[flake8]
+# 最大行长度
+max-line-length = 127
+
+# 忽略的错误和警告
+ignore = 
+    E203,  # 冒号前的空格
+    W503,  # 换行符前的二元运算符
+    E501,  # 行太长（由 max-line-length 控制）
+    E402,  # 模块级导入不在文件顶部
+    F401,  # 导入但未使用
+    F403,  # 通配符导入
+
+# 排除的目录和文件
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    env,
+    .eggs,
+    *.egg,
+    .github,
+    .vscode,
+    .idea,
+    *.pyc,
+    *.pyo,
+    *.pyd,
+    .Python,
+    .coverage,
+    .tox,
+    .pytest_cache,
+    .mypy_cache,
+    .ruff_cache
+
+# 每个文件的最大复杂度
+max-complexity = 10
+
+# 每个函数的行数限制
+max-function-lines = 100
+
+# 每个类的行数限制
+max-class-lines = 300
+
+# 每个文件的函数数量限制
+max-funcs = 20
+
+# 每个文件的类数量限制
+max-classes = 10
+
+# 每个文件的语句数量限制
+max-statements = 100
+
+# 每个文件的参数数量限制
+max-args = 5
+
+# 每个函数的局部变量数量限制
+max-locals = 15
+
+# 每个函数的返回语句数量限制
+max-returns = 6
+
+# 每个函数的分支数量限制
+max-branches = 12
+
+# 每个函数的语句数量限制
+max-statements-in-function = 50
+
+# 每个方法的语句数量限制
+max-statements-in-method = 30
+
+# 每个模块的导入数量限制
+max-imports = 50
+
+# 启用 McCabe 复杂度检查
+mccabe = true
+
+# 输出格式
+format = default
+
+# 统计信息
+statistics = true
+
+# 显示源代码
+show-source = true
+
+# 显示错误位置
+show-column = true
+
+# 显示错误代码
+show-error-codes = true
+
+# 详细输出
+verbose = false
+
+# 安静模式
+quiet = false
+
+# 退出代码
+exit-zero = false
+
+# 基准测试
+benchmark = false
+
+# 缓存目录
+cache-dir = .flake8_cache
+
+# 作业数量
+jobs = 4
+
+# 配置文件路径
+config-file = .flake8
