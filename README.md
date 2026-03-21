@@ -133,7 +133,7 @@ python temp/test_v2.2.2.py
 - **v2.1.8** - Auto backup and smart cleanup
 - **v2.1.6** - Document snapshot and configuration snapshot UI integration
 
-Check the `releases/RELEASE_NOTES_v*.md` files for detailed release information.
+Check the `releases/releases/RELEASE_NOTES_v*.md` files for detailed release information.
 
 ## 🔧 Font Management
 
