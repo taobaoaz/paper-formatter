@@ -1,0 +1,141 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # 每周日运行
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f launcher/requirements.txt ]; then pip install -r launcher/requirements.txt; fi
+    
+    - name: Run basic tests
+      run: |
+        cd tests
+        python -m pytest test_basic.py -v
+      continue-on-error: true
+    
+    - name: Run unit tests (if any)
+      run: |
+        if [ -f "tests/unit" ] || [ -d "tests/unit" ]; then
+          cd tests
+          python -m pytest unit/ -v
+        else
+          echo "No unit tests found"
+        fi
+      continue-on-error: true
+    
+    - name: Run integration tests (if any)
+      run: |
+        if [ -f "tests/integration" ] || [ -d "tests/integration" ]; then
+          cd tests
+          python -m pytest integration/ -v
+        else
+          echo "No integration tests found"
+        fi
+      continue-on-error: true
+    
+    - name: Check code style with black
+      run: |
+        pip install black
+        black --check --diff .
+      continue-on-error: true
+    
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      continue-on-error: true
+    
+    - name: Check imports with isort
+      run: |
+        pip install isort
+        isort --check-only --diff .
+      continue-on-error: true
+    
+    - name: Test report
+      run: |
+        echo "=== Test Summary ==="
+        echo "Python Version: ${{ matrix.python-version }}"
+        echo "OS: ubuntu-latest"
+        echo "===================="
+    
+  test-windows:
+    runs-on: windows-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if (Test-Path launcher/requirements.txt) { pip install -r launcher/requirements.txt }
+    
+    - name: Run basic tests on Windows
+      run: |
+        cd tests
+        python test_basic.py
+      continue-on-error: true
+    
+    - name: Windows test report
+      run: |
+        Write-Host "=== Windows Test Summary ==="
+        Write-Host "Python Version: 3.10"
+        Write-Host "OS: windows-latest"
+        Write-Host "==========================="
+    
+  test-macos:
+    runs-on: macos-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f launcher/requirements.txt ]; then pip3 install -r launcher/requirements.txt; fi
+    
+    - name: Run basic tests on macOS
+      run: |
+        cd tests
+        python3 test_basic.py
+      continue-on-error: true
+    
+    - name: macOS test report
+      run: |
+        echo "=== macOS Test Summary ==="
+        echo "Python Version: 3.10"
+        echo "OS: macos-latest"
+        echo "========================"
