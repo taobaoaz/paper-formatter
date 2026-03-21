@@ -1,0 +1,171 @@
+# pre-commit 配置文件
+# 安装: pip install pre-commit
+# 设置: pre-commit install
+# 运行: pre-commit run --all-files
+
+repos:
+  # 代码格式化
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: [--line-length=127]
+        language_version: python3
+
+  # 导入排序
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=127]
+        language_version: python3
+
+  # 代码检查
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args: [--config=.flake8]
+        language_version: python3
+
+  # 类型检查 (可选)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --follow-imports=skip]
+        language_version: python3
+        exclude: ^tests/
+
+  # 安全检查
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: [--skip, "B101,B404,B603,B607"]
+        language_version: python3
+        exclude: ^tests/
+
+  # 文档字符串检查
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+        language_version: python3
+        exclude: ^tests/
+
+  # 检查合并冲突标记
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: detect-private-key
+
+  # Markdown 检查
+  - repo: https://github.com/igorshubovych/markdownlint-cli2
+    rev: v0.9.0
+    hooks:
+      - id: markdownlint-cli2
+        args: [--config, .markdownlint.json]
+
+  # 检查 requirements.txt
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        args: [--ignore=51457]
+
+  # 更新依赖
+  - repo: https://github.com/pre-commit/mirrors-pip-tools
+    rev: v7.4.0
+    hooks:
+      - id: pip-compile
+        args: [--upgrade, --generate-hashes]
+        files: ^requirements.*\.(in|txt)$
+
+# 全局排除
+exclude: |
+  (?x)^(
+    \.git|
+    \.github|
+    \.vscode|
+    \.idea|
+    __pycache__|
+    build|
+    dist|
+    \.eggs|
+    \.venv|
+    venv|
+    env|
+    node_modules|
+    \.pytest_cache|
+    \.mypy_cache|
+    \.ruff_cache|
+    \.coverage|
+    coverage\.xml|
+    \.tox|
+    \.hypothesis|
+    \.ipynb_checkpoints|
+    \.python-version|
+    \.python-version\.lock|
+    \.DS_Store|
+    Thumbs\.db|
+    \.cache|
+    \.local|
+    \.vagrant|
+    \.terraform|
+    \.serverless|
+    \.next|
+    \.nuxt|
+    \.output|
+    \.vuepress|
+    \.svelte-kit|
+    \.nextflow|
+    \.docusaurus|
+    \.parcel-cache|
+    \.angular|
+    \.nx|
+    \.lighthouse|
+    \.stylelintcache|
+    \.eslintcache|
+    \.yarn|
+    yarn\.lock|
+    package-lock\.json|
+    pnpm-lock\.yaml|
+    bun\.lockb|
+    Cargo\.lock|
+    go\.mod|
+    go\.sum|
+    composer\.lock|
+    Gemfile\.lock|
+    Pipfile\.lock|
+    poetry\.lock|
+    yarn\.lock|
+    \.gradle|
+    gradle-wrapper\.jar|
+    \.mvn|
+    mvnw|
+    \.terraform\.lock\.hcl|
+    \.serverless|
+    \.nextflow|
+    \.dvc|
+    \.pytest_cache|
+    \.mypy_cache|
+    \.ruff_cache|
+    \.coverage|
+    coverage\.xml|
+    \.tox|
+    htmlcov/
+  )
