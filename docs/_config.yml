@@ -1,0 +1,105 @@
+# GitHub Pages 配置
+title: "Paper Formatter"
+description: "专业的学术论文格式化工具文档"
+baseurl: "/paper-formatter"
+url: "https://taobaoaz.github.io"
+
+# 主题设置
+remote_theme: just-the-docs/just-the-docs
+color_scheme: light
+search_enabled: true
+search.heading_level: 2
+search.preview_words: 30
+search.rel_url: true
+
+# 导航设置
+aux_links:
+  "GitHub 仓库":
+    - "//github.com/taobaoaz/paper-formatter"
+  "下载最新版本":
+    - "//github.com/taobaoaz/paper-formatter/releases"
+  "报告问题":
+    - "//github.com/taobaoaz/paper-formatter/issues"
+
+# 页脚链接
+footer_content: "Copyright &copy; 2024 Paper Formatter. Distributed under MIT License."
+
+# 插件
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO 设置
+logo: "/assets/images/logo.png"
+author: "Paper Formatter Team"
+email: "taobaoaz@users.noreply.github.com"
+twitter:
+  username: ""
+github:
+  username: "taobaoaz"
+
+# 排除文件
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .github/
+  - .gitignore
+  - README.md
+  - LICENSE
+  - CHANGELOG.md
+  - CONTRIBUTING.md
+  - DEVELOPMENT.md
+
+# 包含文件
+include:
+  - "_pages"
+  - ".well-known"
+
+# 默认设置
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+      toc: true
+      toc_sticky: true
+
+# 集合
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:path/
+
+# 构建设置
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+# 语法高亮
+highlighter: rouge
+rouge:
+  theme: "github"
+
+# 压缩
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  startings: []
+  blanklines: false
+  profile: false
+
+# 时区
+timezone: Asia/Shanghai
+
+# 语言
+lang: zh-CN
