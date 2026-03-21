@@ -1,11 +1,16 @@
 # Paper Formatter 🎓
 
 [![Build Status](https://github.com/taobaoaz/paper-formatter/actions/workflows/build-windows.yml/badge.svg)](https://github.com/taobaoaz/paper-formatter/actions/workflows/build-windows.yml)
+[![Test Status](https://github.com/taobaoaz/paper-formatter/actions/workflows/test.yml/badge.svg)](https://github.com/taobaoaz/paper-formatter/actions/workflows/test.yml)
 [![Release](https://img.shields.io/github/v/release/taobaoaz/paper-formatter)](https://github.com/taobaoaz/paper-formatter/releases)
+[![GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://taobaoaz.github.io/paper-formatter/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-green)](https://taobaoaz.github.io/paper-formatter/installation)
 
 A professional academic paper formatting tool that helps researchers and students format their papers with ease. Supports Chinese and English documents with advanced formatting features.
+
+**📚 Documentation:** [https://taobaoaz.github.io/paper-formatter/](https://taobaoaz.github.io/paper-formatter/)
 
 ## ✨ Features
 
@@ -48,121 +53,159 @@ A professional academic paper formatting tool that helps researchers and student
 - Smart cleanup strategies (importance/recent/time-based)
 - Snapshot importance marking
 
-## 🚀 Quick Start
+### 🗂️ Document State Snapshot (v2.1.5+)
+- Document state capture and restoration
+- Configuration snapshots
+- Snapshot management UI with keyboard shortcuts
+- Automatic snapshot creation on document open and before formatting
 
-### Prerequisites
-- **Operating System:** Windows 7/8/10/11, Linux, macOS
-- **Python:** 3.8+
-- **Memory:** At least 2GB
-- **Disk:** At least 100MB
+## 🚀 Quick Start
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/taobaoaz/paper-formatter.git
-   cd paper-formatter
-   ```
+Choose your platform:
 
-2. **Navigate to the launcher folder:**
-   ```bash
-   cd 启动文件
-   ```
+#### Windows
+1. Download the latest `.exe` installer from [Releases](https://github.com/taobaoaz/paper-formatter/releases)
+2. Run the installer and follow the prompts
+3. Launch Paper Formatter from Start Menu or Desktop
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### macOS
+1. Download the `.dmg` file from [Releases](https://github.com/taobaoaz/paper-formatter/releases)
+2. Drag Paper Formatter to Applications folder
+3. Launch from Applications
 
-4. **Run the application:**
+#### Linux
+```bash
+# For .deb packages (Ubuntu/Debian)
+wget https://github.com/taobaoaz/paper-formatter/releases/download/v2.2.3/paper-formatter_v2.2.3_amd64.deb
+sudo dpkg -i paper-formatter_v2.2.3_amd64.deb
 
-   **Windows:**
-   ```
-   Double-click 启动.bat
-   ```
+# For AppImage (All Linux distributions)
+wget https://github.com/taobaoaz/paper-formatter/releases/download/v2.2.3/paper-formatter-v2.2.3-x86_64.AppImage
+chmod +x paper-formatter-v2.2.3-x86_64.AppImage
+./paper-formatter-v2.2.3-x86_64.AppImage
+```
 
-   **Linux/Mac:**
-   ```bash
-   ./启动.sh
-   ```
+### Basic Usage
 
-   **Or via command line:**
-   ```bash
-   python launcher.py
-   ```
+1. **Open a Document**: Click "Open" and select your paper document
+2. **Select Format**: Choose from pre-built templates or create custom format
+3. **Format Document**: Click "Format" to apply formatting
+4. **Save Result**: Save the formatted document
+
+## 📖 Documentation
+
+Comprehensive documentation is available at: [https://taobaoaz.github.io/paper-formatter/](https://taobaoaz.github.io/paper-formatter/)
+
+### Documentation Sections:
+- 📋 [Installation Guide](https://taobaoaz.github.io/paper-formatter/installation) - Detailed installation instructions for all platforms
+- 🚀 Quick Start - Get started in minutes
+- 📚 User Guide - Complete user manual
+- 🔧 Development Guide - For contributors and developers
+- 📝 API Reference - Technical documentation
+- ❓ FAQ - Frequently Asked Questions
+- 📋 Changelog - Version history and release notes
+
+## 🛠️ Development
+
+### Prerequisites
+- Python 3.8+
+- Git
+- pip
+
+### Setup Development Environment
+```bash
+# Clone the repository
+git clone https://github.com/taobaoaz/paper-formatter.git
+cd paper-formatter
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows
+venv\Scripts\activate
+# Linux/macOS
+source venv/bin/activate
+
+# Install dependencies
+pip install -r launcher/requirements.txt
+
+# Install development dependencies
+pip install pytest pytest-cov black flake8 isort pre-commit
+
+# Install pre-commit hooks
+pre-commit install
+```
+
+### Running Tests
+```bash
+# Run all tests
+cd tests
+python -m pytest -v
+
+# Run with coverage
+python -m pytest --cov=.. --cov-report=html
+
+# Run code quality checks
+pre-commit run --all-files
+```
+
+### Building from Source
+```bash
+# Install PyInstaller
+pip install pyinstaller
+
+# Build executable
+pyinstaller --onefile --windowed \
+  --name="paper-formatter" \
+  --add-data "modules/parsers:parsers" \
+  --paths modules \
+  --paths core \
+  --hidden-import parsers \
+  ./core/main.py
+```
 
 ## 📁 Project Structure
 
 ```
 paper-formatter/
-│
-├── 🚀 启动文件/       # Launcher files (start here)
-├── 🔧 核心模块/       # Core modules
-├── ⚙️ 功能模块/       # Feature modules
-├── 📚 文档资料/       # Documentation
-└── 📝 临时文件/       # Temporary files
+├── .github/              # GitHub Actions workflows
+├── core/                 # Core application logic
+├── modules/              # Feature modules
+├── launcher/            # Launcher scripts and requirements
+├── templates/           # Document templates
+├── releases/            # Release notes (organized)
+├── docs/               # GitHub Pages documentation
+├── tests/              # Test files
+├── installer/          # Installer resources
+├── .flake8             # Code style configuration
+├── .pre-commit-config.yaml # Pre-commit hooks
+├── CHANGELOG.md        # Version history
+├── CONTRIBUTING.md     # Contribution guidelines
+├── DEVELOPMENT.md      # Development guide
+├── LICENSE             # MIT License
+├── README.md           # Project documentation (this file)
+└── README_简化版.md    # Simplified Chinese README
 ```
-
-## 🛠️ Development
-
-### Building from Source
-
-The project uses GitHub Actions for automated builds. When you push a tag starting with 'v', it automatically:
-
-1. **Builds Windows EXE** - Creates a portable executable
-2. **Builds Installer** - Creates an installer package
-3. **Creates Releases** - Publishes to GitHub Releases
-
-### Running Tests
-
-```bash
-# Run test scripts
-python temp/test_v2.2.2.py
-```
-
-## 📦 Releases
-
-### Latest Release: v2.2.2
-
-**Font Management Update** - Added online font search and download capabilities.
-
-### Previous Releases
-
-- **v2.2.1** - Batch PDF export and Chinese font support
-- **v2.2.0** - PDF export and help system
-- **v2.1.8** - Auto backup and smart cleanup
-- **v2.1.6** - Document snapshot and configuration snapshot UI integration
-
-Check the `releases/releases/RELEASE_NOTES_v*.md` files for detailed release information.
-
-## 🔧 Font Management
-
-### Features
-- ✅ Online font library search
-- ✅ Chinese font priority search
-- ✅ Font package download (multi-threaded)
-- ✅ Real-time download progress display
-- ✅ Automatic font installation
-- ✅ Cross-platform support (Windows/macOS/Linux)
-
-### Usage
-1. Click "Help" → "Font Management"
-2. Or use shortcut Ctrl+Alt+F
-3. Switch to "Search & Download" tab
-4. Enter font name (optional)
-5. Check "Search Chinese fonts only"
-6. Click "Search"
-7. Select fonts and click "Download Selected"
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+### How to Contribute
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Development Guidelines
+- Follow PEP 8 style guide
+- Write tests for new features
+- Update documentation as needed
+- Use descriptive commit messages
 
 ## 📄 License
 
@@ -170,14 +213,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/taobaoaz/paper-formatter/issues)
-- **Repository:** [GitHub](https://github.com/taobaoaz/paper-formatter)
+- **Issues**: [GitHub Issues](https://github.com/taobaoaz/paper-formatter/issues)
+- **Documentation**: [GitHub Pages](https://taobaoaz.github.io/paper-formatter/)
+- **Releases**: [GitHub Releases](https://github.com/taobaoaz/paper-formatter/releases)
 
 ## 🙏 Acknowledgments
 
-- Thanks to all contributors who have helped improve this project
-- Special thanks to the Python community for excellent libraries
-- Inspired by the needs of academic researchers and students
+- Thanks to all contributors and users
+- Built with Python and PyQt5
+- Font search powered by Google Fonts API
+- Icons from FontAwesome
 
 ---
 
